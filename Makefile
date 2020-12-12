@@ -1,4 +1,7 @@
-.PHONY: build
+.PHONY: build run
 
 build:
-	pipenv run black *.py
+	poetry run black .
+
+run:
+	poetry run python main.py
