@@ -1,6 +1,9 @@
 import wx
 import wx.stc
 
+from theme import Default
+
+
 INSERT_MODE = "I"
 NAVIGATE_MODE = "N"
 
@@ -14,13 +17,18 @@ class CodeEditorPanel(wx.Panel):
         super().__init__(*args, **kwargs)
 
         self.__vbox = wx.BoxSizer(wx.VERTICAL)
+        self.SetBackgroundColour(Default.Background)
 
         self.__stc = wx.stc.StyledTextCtrl(self)
+        self.__stc.StyleSetBackground(
+            wx.stc.STC_STYLE_DEFAULT, wx.Colour(Default.Background)
+        )
 
         self.__stc.StyleSetFont(
             wx.stc.STC_STYLE_DEFAULT,
             wx.Font(wx.FontInfo(14).Family(wx.FONTFAMILY_TELETYPE)),
         )
+        self.__stc.StyleClearAll()
 
         self.__mode = INSERT_MODE
 
@@ -30,6 +38,8 @@ class CodeEditorPanel(wx.Panel):
         self.__stc.SetScrollWidth(self.GetSize().width)
         self.__stc.SetScrollWidthTracking(1)
         self.SetSizer(self.__vbox)
+
+        self.__nav_acc = []
 
     def __handleChar(self, event, *args, **kwargs):
         if self.__mode == INSERT_MODE:
@@ -45,7 +55,7 @@ class CodeEditorPanel(wx.Panel):
 
     def __handleKeyDownInsertMode(self, event, *args, **kwargs):
         if event.KeyCode == wx.WXK_ESCAPE:
-            self.__mode = NAVIGATE_MODE
+            self.__enterNavigateMode()
             return
         event.Skip()
 
@@ -60,7 +70,17 @@ class CodeEditorPanel(wx.Panel):
         ch = chr(event.GetUnicodeKey())
 
         if ch == u"i":
-            self.__mode = INSERT_MODE
+            self.__enterInsertMode()
+        else:
+            self.__nav_acc.append(ch)
 
     def __handleCharInsertMode(self, event, *args, **kwargs):
         event.Skip()
+
+    def __enterNavigateMode(self):
+        self.__mode = NAVIGATE_MODE
+        self.__nav_acc = []
+
+    def __enterInsertMode(self):
+        print(self.__nav_acc)
+        self.__mode = INSERT_MODE
