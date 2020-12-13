@@ -18,7 +18,6 @@ manager.AddPane(CodeEditorPanel(frm), wx.CENTER, "mainEditor")
 scratchArea = CodeEditorPanel(frm)
 info = wx.aui.AuiPaneInfo().BestSize(wx.Size(300, 600)).Caption("Scratch")
 info = info.Right().CloseButton(0)
-
 manager.AddPane(scratchArea, info)
 manager.Update()
 
