@@ -1,4 +1,4 @@
-.PHONY: build run dist-windows add-dep add-dev-dep
+.PHONY: build run dist-windows add-dep add-dev-dep install-deps
 
 build:
 	poetry run black .
@@ -14,3 +14,7 @@ add-dep:
 
 add-dev-dep:
 	poetry add -D $(DEP)
+
+
+install-deps:
+	poetry install
