@@ -15,6 +15,6 @@ add-dep:
 add-dev-dep:
 	poetry add -D $(DEP)
 
-
 install-deps:
 	poetry install
+	go get -u -v github.com/fhmq/hmq && go install github.com/fhmq/hmq
