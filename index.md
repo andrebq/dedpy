@@ -1,37 +1,16 @@
-## Welcome to GitHub Pages
+# dedpy - D Editor in Python
 
-You can use the [editor on GitHub](https://github.com/andrebq/dedpy/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+Another attempt at writing my own editor and learning about
+cross-platform gui programming in multiple languages.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+This time around I am playing with python.
 
-### Markdown
+## Devlog
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+As part of the development of this project, I'll keep a crude version
+of a devlog. Where I'll record any piece of information/context that
+I find relevant as well as some ramblings of a grumpy dev :-D.
 
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/andrebq/dedpy/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+- [2020-12-12 - The beginning of a journey](./devlog/2020-12-12.md)
+- [2020-12-13 - Surprisingly everything works](./devlog/2020-12-13.md)
+- [2020-12-16 - Let's talk about communication](./devlog/2020-12-16.md)
