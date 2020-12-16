@@ -2,6 +2,12 @@
 import wx
 import wx.aui
 
+from bus import Bus
+import pid
+
+globalBus = Bus(rootPID=pid.random_pid())
+globalBus.start_loop()
+
 from panels import CodeEditorPanel
 
 # Next, create an application object.
@@ -26,3 +32,4 @@ frm.Show()
 
 # Start the event loop.
 app.MainLoop()
+globalBus.end_loop()
