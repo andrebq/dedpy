@@ -13,10 +13,20 @@ class CodeEditorPanel(wx.Panel):
     interact with the external file manager to write/read data from files
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, parent, bus=None, pid=None, *args, **kwargs):
+        if not bus:
+            raise ValueError(
+                "Cannot construct a Code Editor Panel without a bus connection"
+            )
+
+        if not pid:
+            raise ValueError("Cannot construct a Code Editor Panel without a PID")
+
+        super().__init__(parent, *args, **kwargs)
 
         self.__vbox = wx.BoxSizer(wx.VERTICAL)
+        self.__pid = pid
+        self.__bus = bus
         self.SetBackgroundColour(Default.Background)
 
         self.__stc = wx.stc.StyledTextCtrl(self)
@@ -40,6 +50,12 @@ class CodeEditorPanel(wx.Panel):
         self.SetSizer(self.__vbox)
 
         self.__nav_acc = []
+
+        self.__bus.watch_pid(self.__pid)
+
+        self.__bus.publish_json(
+            self.__pid.topic(["events", "created"]), ("pid", str(self.__pid))
+        )
 
     def __handleChar(self, event, *args, **kwargs):
         if self.__mode == INSERT_MODE:
@@ -80,7 +96,13 @@ class CodeEditorPanel(wx.Panel):
     def __enterNavigateMode(self):
         self.__mode = NAVIGATE_MODE
         self.__nav_acc = []
+        self.__bus.publish_json(
+            self.__pid.topic(["events", "panel_mode"]), ("mode", NAVIGATE_MODE)
+        )
 
     def __enterInsertMode(self):
         print(self.__nav_acc)
         self.__mode = INSERT_MODE
+        self.__bus.publish_json(
+            self.__pid.topic(["events", "panel_mode"]), ("mode", INSERT_MODE)
+        )
