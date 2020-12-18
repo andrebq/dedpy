@@ -2,6 +2,7 @@ import wx
 import wx.stc
 
 from theme import Default
+import bus as bus_module
 
 
 INSERT_MODE = "I"
@@ -51,11 +52,19 @@ class CodeEditorPanel(wx.Panel):
 
         self.__nav_acc = []
 
-        self.__bus.watch_pid(self.__pid)
-
         self.__bus.publish_json(
             self.__pid.topic(["events", "created"]), ("pid", str(self.__pid))
         )
+        self.Bind(bus_module.EVT_NEW_MESSAGE, self.__on_new_message)
+    
+    def pid(self):
+        return self.__pid
+    
+    def __on_new_message(self, evt):
+        pass
+    
+    def __publish_bus_event(self, opts={}):
+        opts[u'pid'] = str(self.__pid)
 
     def __handleChar(self, event, *args, **kwargs):
         if self.__mode == INSERT_MODE:

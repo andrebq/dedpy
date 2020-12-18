@@ -3,7 +3,7 @@ import bus as bus_module
 
 
 class BusView(wx.Frame):
-    def __init__(self, parent=None, bus=None, *args, **kw):
+    def __init__(self, parent=None, *args, **kw):
         super().__init__(parent, *args, **kw)
 
         self.SetTitle("Bus Viewer")
