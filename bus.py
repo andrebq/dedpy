@@ -8,6 +8,7 @@ import weakref
 _busMessage = wx.NewEventType()
 EVT_NEW_MESSAGE = wx.PyEventBinder(_busMessage, 1)
 
+
 class Bus:
     def __init__(self, addr="127.0.0.1", port=1883):
         busPID = pid.random_pid()
@@ -22,9 +23,12 @@ class Bus:
         self.__mqc.on_message = self.__bus_new_message
         self.__connected = False
         self.__connected_lock = threading.Lock()
-    
+
+    def pid_conn(self, pid):
+        return PidConn(self, pid)
+
     def duplicate(self):
-        """ returns a new Bus object connected to the same address/port
+        """returns a new Bus object connected to the same address/port
         of the current one.
 
         Useful when you want to have multiple subscriptions to the same
@@ -33,13 +37,34 @@ class Bus:
         Each bus runs on its own thread"""
         return Bus(addr=self.__addr, port=self.__port)
 
-    def publish_json(self, topic, payload_object):
-        self.__mqc.publish(topic, json.dumps(payload_object))
+    def _broadcast_json(self, pid, payload=None, meta={}):
+        meta["sender"] = str(pid)
+        self.__mqc.publish(
+            pid.topic(["broadcast"]),
+            json.dumps(
+                {
+                    "payload": payload,
+                    "meta": meta,
+                }
+            ),
+        )
+
+    def _unicast_json(self, fromPid, toPid, payload=None, meta={}):
+        meta["sender"] = str(fromPid)
+        self.__mqc.publish(
+            toPid.topic(["input"]),
+            json.dumps(
+                {
+                    "payload": payload,
+                    "meta": meta,
+                }
+            ),
+        )
 
     def subscribe_pid(self, pid, topic, callback):
         if not pid:
-            topic_str = '/'.join(topic)
-            self.__mqc.message_callback_add('/'.join(topic), callback)
+            topic_str = "/".join(topic)
+            self.__mqc.message_callback_add("/".join(topic), callback)
             self.__mqc.subscribe(topic_str, qos=1)
             return
         topic_str = pid.topic(topic)
@@ -67,6 +92,26 @@ class Bus:
         self.__mqc.loop_stop()
 
 
+class PidConn:
+    def __init__(self, bus, pid):
+        self.__bus = bus
+        self.__pid = pid
+
+    def broadcast(self, payload=None, meta={}):
+        self.__bus._broadcast_json(self.__pid, payload, meta)
+
+    def unicast(self, pid, payload=None, meta={}):
+        self.__bus._unicast_json(
+            fromPid=self.__pid, toPid=pid, payload=payload, meta=meta
+        )
+
+    def pid(self):
+        return self.__pid
+
+    def bus(self):
+        return self.__bus
+
+
 class BusMessageEvent(wx.PyCommandEvent):
     def __init__(self, etype=None, eid=None, message=None):
         if not eid:
@@ -80,6 +125,8 @@ class BusMessageEvent(wx.PyCommandEvent):
 
         super().__init__(etype, eid)
         self.__message = message
+        self.__sender = None
+        self.__obj = None
 
     def message(self):
         return self.__message
@@ -91,25 +138,49 @@ class BusMessageEvent(wx.PyCommandEvent):
         return self.__message.payload.decode("utf-8")
 
     def payload_obj(self):
-        return json.loads(self.__message.payload.decode("utf-8"))
+        if self.__obj:
+            return self.__obj
+        self.__obj = json.loads(self.__message.payload.decode("utf-8"))
+        return self.__obj
 
-def connect_to_widget(bus, widget, pid, topic):
-    """ returns a closure which implements mqtt on_message callback
-    and for each new mqtt message it will publish a BusMessageEvent
-    to widget.
+    def sender(self):
+        if self.__sender:
+            return self.__sender
 
-    Widget is kept in a weak-ref to avoid having to write dispose methods,
-    the callback though is not cleared if the widget is gc'ed
+        obj = self.payload_obj()
+        try:
+            self.__sender = pid.try_parse_pid(obj["meta"]["sender"])
+        except KeyError:
+            pass
+
+        return self.__sender
+
+    def is_valid_pid_msg(self):
+        return self.sender() != None
+
+
+def connect_to_widget(bus, widget, pid):
+    """Configures the widget so that whenever a new message is published
+    in the given pid input box the widget will receive a BusMessageEvent
+    with the information from that specific message.
+
+    The callback will ensure that
     """
     cb = _make_bus_callback(widget)
-    print(bus, widget, pid, topic)
+    topic = pid.topic(["inbox"])
     bus.subscribe_pid(pid, topic, cb)
+
 
 def _make_bus_callback(widget):
     widget = weakref.ref(widget)
 
     def _callback(client, userdata, message):
         ev = BusMessageEvent(message=message)
+        if not ev.is_valid_pid_msg():
+            print("Invalid message: ", ev.payload_str())
+            return
+
         w = widget()
         wx.PostEvent(w, ev)
+
     return _callback

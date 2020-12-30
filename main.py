@@ -9,6 +9,9 @@ import time
 import bus
 import pid
 import dirlist
+import initializers
+
+from panels import CodeEditorPanel
 
 rootPID = pid.Pid()
 
@@ -18,7 +21,8 @@ except ConnectionRefusedError as e:
     # this whole logic is too broken to be considered reliable,
     # but works for testing purposes
     def start_hmq(name):
-        subprocess.call('hmq')
+        subprocess.call("hmq")
+
     t = threading.Thread(target=start_hmq, args=(1,), daemon=True)
     t.start()
     time.sleep(5)
@@ -27,33 +31,18 @@ except ConnectionRefusedError as e:
 
 globalBus.start_loop()
 
-from panels import CodeEditorPanel
 
-# Next, create an application object.
 app = wx.App()
-
-# Then a frame.
-frm = wx.Frame(None, title="Hello World", size=wx.Size(800, 600))
-busview = internals.BusView(None, size=wx.Size(800, 600))
-busview.Show()
-
-debugBus = globalBus.duplicate()
-debugBus.start_loop()
-
-bus.connect_to_widget(debugBus, busview, None, ['#'])
+(busview, debugBus) = initializers.enable_bus_debugger(globalBus.duplicate())
 
 # dock
+frm = wx.Frame(None, title="Hello World", size=wx.Size(800, 600))
 manager = wx.aui.AuiManager(frm)
-mainEditor = CodeEditorPanel(frm,
-    bus=globalBus,
-    pid=rootPID.sub_pid())
-bus.connect_to_widget(globalBus, mainEditor, mainEditor.pid(), ['rpc', '#'])
+mainEditor = CodeEditorPanel(frm, bus=globalBus, pid=rootPID.sub_pid())
 
-manager.AddPane(mainEditor, wx.CENTER,
-    "mainEditor")
+manager.AddPane(mainEditor, wx.CENTER, "mainEditor")
 
 scratchArea = CodeEditorPanel(frm, bus=globalBus, pid=rootPID.sub_pid())
-bus.connect_to_widget(globalBus, scratchArea, scratchArea.pid(), ['rpc', '#'])
 
 info = wx.aui.AuiPaneInfo().BestSize(wx.Size(300, 600)).Caption("Scratch")
 info = info.Right().CloseButton(0)

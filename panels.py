@@ -26,8 +26,9 @@ class CodeEditorPanel(wx.Panel):
         super().__init__(parent, *args, **kwargs)
 
         self.__vbox = wx.BoxSizer(wx.VERTICAL)
-        self.__pid = pid
-        self.__bus = bus
+        self.__pidconn = bus.pid_conn(pid)
+        bus_module.connect_to_widget(self.__pidconn.bus(), self, self.__pidconn.pid())
+
         self.SetBackgroundColour(Default.Background)
 
         self.__stc = wx.stc.StyledTextCtrl(self)
@@ -51,20 +52,17 @@ class CodeEditorPanel(wx.Panel):
         self.SetSizer(self.__vbox)
 
         self.__nav_acc = []
-
-        self.__bus.publish_json(
-            self.__pid.topic(["events", "created"]), ("pid", str(self.__pid))
-        )
+        self.__pidconn.broadcast()
         self.Bind(bus_module.EVT_NEW_MESSAGE, self.__on_new_message)
-    
+
     def pid(self):
         return self.__pid
-    
+
     def __on_new_message(self, evt):
         pass
-    
+
     def __publish_bus_event(self, opts={}):
-        opts[u'pid'] = str(self.__pid)
+        opts[u"pid"] = str(self.__pid)
 
     def __handleChar(self, event, *args, **kwargs):
         if self.__mode == INSERT_MODE:
@@ -105,13 +103,13 @@ class CodeEditorPanel(wx.Panel):
     def __enterNavigateMode(self):
         self.__mode = NAVIGATE_MODE
         self.__nav_acc = []
-        self.__bus.publish_json(
+        self.__pidconn.broadcast(
             self.__pid.topic(["events", "panel_mode"]), ("mode", NAVIGATE_MODE)
         )
 
     def __enterInsertMode(self):
         print(self.__nav_acc)
         self.__mode = INSERT_MODE
-        self.__bus.publish_json(
+        self.__pidconn.broadcast(
             self.__pid.topic(["events", "panel_mode"]), ("mode", INSERT_MODE)
         )
