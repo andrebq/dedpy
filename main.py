@@ -57,6 +57,7 @@ manager.Update()
 
 # Show it.
 frm.Show()
+busview.Raise()
 
 # Start the event loop.
 app.MainLoop()
