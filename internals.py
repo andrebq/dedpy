@@ -19,25 +19,31 @@ class _MessagePanel(wx.Panel):
         self.__sizer.Add(self.__messages, 1, wx.EXPAND, 0)
         self.__sizer.SetSizeHints(self)
         self.SetSizer(self.__sizer)
-    
+
     def autofit(self):
         self.__messages.SetColumnWidth(1, wx.LIST_AUTOSIZE)
         self.__messages.SetColumnWidth(2, wx.LIST_AUTOSIZE)
-    
+
     def append_event(self, evt):
         self.__count += 1
-        itemId = self.__messages.Append(
-            (evt.topic_str(), evt.payload_str())
-        )
+        itemId = self.__messages.Append((evt.topic_str(), evt.payload_str()))
         self.__messages.SetItemData(itemId, self.__count)
         self.__rawEvents[self.__count] = evt.raw_dict()
         return (itemId, self.__count)
-    
+
     def event_by_id(self, id):
         try:
             return self.__rawEvents[id]
         except KeyError:
             return None
+
+class _EventViewerMenu(wx.Menu):
+    def __init__(self, parent, *args, **kw):
+        super().__init__()
+        self.Append(wx.MenuItem(self, wx.NewId(), 'Copy value'))
+        self.AppendSeparator()
+        self.Append(wx.MenuItem(self, wx.NewId(), 'Edit menu options...'))
+
 
 class _EventViewer(wx.Panel):
     def __init__(self, parent, *args, **kw):
@@ -48,13 +54,19 @@ class _EventViewer(wx.Panel):
         self.__sizer.Add(self.__tree, 1, wx.EXPAND, 0)
         self.__sizer.SetSizeHints(self)
         self.SetSizer(self.__sizer)
+        self.Layout()
+
+        self.__tree.Bind(wx.EVT_RIGHT_DOWN, self.__show_options)
     
+    def __show_options(self, evt):
+        self.PopupMenu(_EventViewerMenu(self), evt.GetPosition())
+
     def display(self, busDict):
         self.__tree.DeleteAllItems()
-        root = self.__tree.AddRoot('MessageBus')
+        root = self.__tree.AddRoot("MessageBus")
         self.__append_dict(root, busDict)
         self.__tree.ExpandAll()
-    
+
     def __append_dict(self, treeParent, pyDict):
         for k in pyDict:
             value = pyDict[k]
@@ -62,7 +74,7 @@ class _EventViewer(wx.Panel):
                 subTree = self.__tree.AppendItem(treeParent, str(k))
                 self.__append_dict(subTree, value)
             else:
-                self.__tree.AppendItem(treeParent, f'{k}: {value}')
+                self.__tree.AppendItem(treeParent, f"{k}: {value}")
 
 
 class BusView(wx.Frame):
@@ -80,6 +92,7 @@ class BusView(wx.Frame):
         info = info.Right().CloseButton(0)
         self.__manager.AddPane(self.__event_viewer, info)
         self.__manager.Update()
+        self.SetAutoLayout(True)
 
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.__message_selected)
 
@@ -88,7 +101,7 @@ class BusView(wx.Frame):
     def __on_new_message(self, evt):
         itemId = self.__messages.append_event(evt)
         self.__messages.autofit()
-    
+
     def __message_selected(self, evt):
         self.__event_viewer.display(self.__messages.event_by_id(evt.GetData()))
 

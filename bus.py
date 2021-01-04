@@ -139,17 +139,17 @@ class BusMessageEvent(wx.PyCommandEvent):
 
     def payload_obj(self):
         self.__parse_payload()
-        return self.__obj['payload']
-    
+        return self.__obj["payload"]
+
     def __parse_payload(self):
         if self.__obj:
             return self.__obj
         self.__obj = json.loads(self.__message.payload.decode("utf-8"))
-    
+
     def meta_obj(self):
         self.__parse_payload()
-        return self.__obj['meta']
-    
+        return self.__obj["meta"]
+
     def raw_dict(self):
         self.__parse_payload()
         return self.__obj

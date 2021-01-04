@@ -101,15 +101,17 @@ class CodeEditorPanel(wx.Panel):
         event.Skip()
 
     def __enterNavigateMode(self):
+        prev = self.__mode
         self.__mode = NAVIGATE_MODE
         self.__nav_acc = []
-        self.__pidconn.broadcast(
-            self.__pid.topic(["events", "panel_mode"]), ("mode", NAVIGATE_MODE)
-        )
+        self.__pidconn.broadcast({
+            'mode': NAVIGATE_MODE,
+            'prev': prev}, meta={'event': 'mode-change'})
 
     def __enterInsertMode(self):
-        print(self.__nav_acc)
+        prev = self.__mode
         self.__mode = INSERT_MODE
-        self.__pidconn.broadcast(
-            self.__pid.topic(["events", "panel_mode"]), ("mode", INSERT_MODE)
-        )
+        self.__pidconn.broadcast({
+            'mode': INSERT_MODE,
+            'prev': prev,
+            'navAcc': self.__nav_acc}, meta={'event': 'mode-change'})

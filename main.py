@@ -1,65 +1,35 @@
-# First things, first. Import the wxPython package.
-import wx
-import wx.aui
-import internals
-import subprocess
-import threading
-import time
-
-import bus
-import pid
-import dirlist
-import initializers
-
-from panels import CodeEditorPanel
-
-rootPID = pid.Pid()
-
-try:
-    globalBus = bus.Bus()
-except ConnectionRefusedError as e:
-    # this whole logic is too broken to be considered reliable,
-    # but works for testing purposes
-    def start_hmq(name):
-        subprocess.call("hmq")
-
-    t = threading.Thread(target=start_hmq, args=(1,), daemon=True)
-    t.start()
-    time.sleep(5)
-    globalBus = bus.Bus()
+from app import bus_viewer, main_app
+import sys
+import argparse
 
 
-globalBus.start_loop()
+class App:
+    def __init__(self, args):
+        parser = argparse.ArgumentParser(
+            description="A simple text editor",
+            usage="""ded <command> [<args>]
+
+Available commands:
+   debugger   Shows all messages sent on the PIDComm bus
+   editor     Opens the text editor (starting a new PIDComm bus if needed)
+""",
+        )
+        parser.add_argument("command", help="Subcommand to run")
+        args = parser.parse_args(args[1:2])
+
+        if not hasattr(self, args.command):
+            print(f"Command {args.command} not found")
+            parser.print_help()
+            exit(1)
+
+        getattr(self, args.command)(args)
+
+    def debugger(self, args):
+        bus_viewer()
+
+    def editor(self, args):
+        main_app()
 
 
-app = wx.App()
-(busview, debugBus) = initializers.enable_bus_debugger(globalBus.duplicate())
-
-# dock
-frm = wx.Frame(None, title="Hello World", size=wx.Size(800, 600))
-manager = wx.aui.AuiManager(frm)
-mainEditor = CodeEditorPanel(frm, bus=globalBus, pid=rootPID.sub_pid())
-
-manager.AddPane(mainEditor, wx.CENTER, "mainEditor")
-
-scratchArea = CodeEditorPanel(frm, bus=globalBus, pid=rootPID.sub_pid())
-
-info = wx.aui.AuiPaneInfo().BestSize(wx.Size(300, 600)).Caption("Scratch")
-info = info.Right().CloseButton(0)
-manager.AddPane(scratchArea, info)
-
-filenav = dirlist.LocalDirList(frm, bus=globalBus, pid=rootPID.sub_pid())
-info = wx.aui.AuiPaneInfo().BestSize(wx.Size(300, 600)).Caption("Files")
-info = info.Left().CloseButton(0)
-manager.AddPane(filenav, info)
-
-manager.Update()
-
-# Show it.
-frm.Show()
-busview.Raise()
-
-# Start the event loop.
-app.MainLoop()
-globalBus.end_loop()
-debugBus.end_loop()
+if __name__ == "__main__":
+    App(sys.argv)

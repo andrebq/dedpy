@@ -1,4 +1,4 @@
-.PHONY: build run dist-windows add-dep add-dev-dep install-deps pydoc
+.PHONY: build run dist-windows add-dep add-dev-dep install-deps pydoc busview pyshell runfile
 
 DOC_PORT?=8081
 
@@ -6,10 +6,20 @@ build:
 	poetry run black .
 
 run:
-	poetry run python main.py
+	poetry run python main.py editor
+
+FILE?=_scratch.py
+runfile:
+	poetry run python $(FILE)
+
+busview:
+	poetry run python main.py debugger
 
 dist-windows:
-	poetry run pyinstaller main.py
+	poetry run pyinstaller main.py -n dedpy
+
+pyshell:
+	poetry run ipython
 
 add-dep:
 	poetry add $(DEP)

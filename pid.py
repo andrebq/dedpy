@@ -55,6 +55,9 @@ def try_parse_pid(value):
 def random_pid():
     return Pid(_random_sha256())
 
+def well_known_pid(name):
+    return Pid(hashlib.sha256(str(name).encode("utf-8")).hexdigest())
+
 
 def _random_sha256():
     return hashlib.sha256(_random_string(10).encode("ascii")).hexdigest()
